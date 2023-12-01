@@ -4,7 +4,7 @@
   <ul>
     <li v-for="raccourci in raccourcis" :key="raccourci.id">
       {{ raccourci.fields.New_racc }}
-      <button @click="handleUpdate(raccourci)">Modifier</button>
+      <button @click="toggleModalModifyRacc(raccourci)">Modifier</button>
       <button @click="deleteRaccourci(raccourci.id)">Supprimer</button>
     </li>
   </ul>
@@ -36,7 +36,7 @@
   </button>
   <!-- Form ajouter une url -->
   <div v-if="displayModalNewRacc">
-    <form @submit.prevent="getRaccourcis">
+    <form @submit.prevent="createRaccourci">
       <label for="input_new_racc">Entrez une URL :</label>
       <input
         type="url"
@@ -54,12 +54,10 @@
 
   <!-- FORM MODIFY RACC -->
   <!-- Button open modal -->
-  <button @click="toggleModalModifyRacc" id="btn_open_modal_input_modify_racc">
-    Modifier un raccourci
-  </button>
+
   <!-- Form modifier le raccourci -->
   <div v-if="displayModalModifyRacc">
-    <form>
+    <form @submit.prevent="updateRaccourci">
       <label for="input_modify_racc">Entrez nouvelle URL :</label>
       <input
         type="url"
@@ -130,7 +128,7 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.raccourcis = data.records;
-          console.log(data.records);
+          console.log("URL envoyée : ", this.input_new_racc);
         })
         .catch((error) => {
           console.log(error);
@@ -154,6 +152,7 @@ export default {
       })
         .then((response) => response.json())
         .then((data) => {
+          this.raccourcis.push(data); //Evite le rafraichissement de la page
           this.handleResetForm();
         })
         .catch((error) => {
@@ -162,6 +161,7 @@ export default {
     },
     // Supprimer le raccourci
     deleteRaccourci(id) {
+      console.log(id);
       fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}/${id}`, {
         headers: {
           Authorization: `Bearer ${API_TOKEN}`,
@@ -169,7 +169,13 @@ export default {
         method: "DELETE",
       })
         .then((response) => response.json())
-        .then((data) => {})
+
+        .then((data) => {
+          //Evite le rafraichissement de la page
+          this.raccourcis = this.raccourcis.filter(
+            (raccourcis) => raccourcis.id !== id
+          );
+        })
         .catch((error) => {
           console.log(error);
         });
